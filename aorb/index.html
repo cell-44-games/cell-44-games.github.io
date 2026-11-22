@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>A or B · Subject 44</title>
+<meta name="description" content="Two doors. One leads out, one leads to the incinerator. Read the signs and choose. A free horror riddle game from Subject 44.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+  :root { --red: #e83a2a; --ink: #f0ece2; --dim: #9a958c; --plate: #1c1a18; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: #000; color: var(--ink); font-family: "Special Elite", "Courier New", monospace; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  #stage { position: fixed; inset: 0; margin: auto; aspect-ratio: 9 / 16; max-width: 100vw; max-height: 100vh; height: 100vh; overflow: hidden;
+    background: radial-gradient(ellipse at 50% 0%, rgba(120,20,14,0.45), rgba(0,0,0,0) 60%), #070606; display: flex; flex-direction: column; }
+  #top { padding: 12px 14px 0; display: flex; justify-content: space-between; font-size: 14px; letter-spacing: 2px; color: var(--dim); }
+  #top b { color: var(--ink); font-weight: normal; }
+  #rules { margin: 10px 14px 0; padding: 10px 12px; font-size: 14px; line-height: 1.45; border-left: 3px solid var(--red); background: rgba(255,255,255,0.04); }
+  #rules b { color: var(--red); font-weight: normal; }
+  #timer { margin: 10px 14px 0; height: 6px; background: rgba(255,255,255,0.12); }
+  #timer i { display: block; height: 100%; width: 100%; background: var(--ink); transform-origin: left; }
+  #timer.hot i { background: var(--red); }
+  #doors { flex: 1; display: flex; gap: 10px; padding: 12px 14px 14px; min-height: 0; }
+  .door { flex: 1; display: flex; flex-direction: column; min-width: 0; cursor: pointer; border: 2px solid rgba(240,236,226,0.18); background: #000; transition: border-color 0.15s, transform 0.15s; }
+  .door:active, .door:hover { border-color: rgba(240,236,226,0.7); }
+  .door .pic { flex: 1; min-height: 0; background-size: cover; background-position: center; position: relative; }
+  .door .pic::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0) 60%, rgba(0,0,0,0.85)); }
+  .door .sign { padding: 10px 9px 12px; background: var(--plate); border-top: 2px solid #3a342c; font-size: 13.5px; line-height: 1.35; min-height: 94px; color: #e8e2d4; }
+  .door .sign small { display: block; color: var(--red); letter-spacing: 3px; font-size: 12px; margin-bottom: 4px; }
+  .door .pick { text-align: center; padding: 10px 0; font-size: 22px; letter-spacing: 4px; background: rgba(176,26,18,0.3); border-top: 1px solid rgba(240,236,226,0.25); }
+  #fx { position: absolute; inset: 0; pointer-events: none; background-size: cover; background-position: center; opacity: 0; }
+  #flash { position: absolute; inset: 0; pointer-events: none; background: #fff; opacity: 0; }
+  .card { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 26px; background: rgba(0,0,0,0.86); z-index: 5; }
+  .card.hidden { display: none; }
+  .card h1 { font-size: 44px; margin: 0 0 6px; letter-spacing: 6px; font-weight: normal; line-height: 1.1; }
+  .card h1 em { color: var(--red); font-style: normal; }
+  .card h2 { font-size: 19px; margin: 0 0 18px; color: var(--red); letter-spacing: 3px; font-weight: normal; }
+  .card p { font-size: 16px; line-height: 1.5; margin: 0 0 16px; max-width: 340px; }
+  .card p.small { font-size: 13px; color: var(--dim); }
+  .btn { display: block; width: 100%; max-width: 320px; margin: 8px auto 0; padding: 14px 16px; font: inherit; font-size: 17px; letter-spacing: 3px; color: var(--ink); background: rgba(176,26,18,0.35); border: 2px solid var(--ink); text-decoration: none; cursor: pointer; }
+  .btn.ghost { background: transparent; border-color: rgba(240,236,226,0.4); font-size: 14px; }
+  .shake { animation: shake 0.35s linear 2; }
+  @keyframes shake { 0%,100% { transform: translate(0,0); } 25% { transform: translate(6px,-4px); } 50% { transform: translate(-5px,5px); } 75% { transform: translate(4px,3px); } }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="top"><span>THE LAST ROOM</span><span>ROOM <b id="round">1</b> / 3</span></div>
+  <div id="rules"></div>
+  <div id="timer"><i id="bar"></i></div>
+  <div id="doors">
+    <div class="door" data-d="A"><div class="pic" style="background-image:url(../img/doorA.jpg)"></div><div class="sign"><small>DOOR A</small><span id="signA"></span></div><div class="pick">A</div></div>
+    <div class="door" data-d="B"><div class="pic" style="background-image:url(../img/doorB.jpg)"></div><div class="sign"><small>DOOR B</small><span id="signB"></span></div><div class="pick">B</div></div>
+  </div>
+  <div id="fx"></div>
+  <div id="flash"></div>
+
+  <div class="card" id="start">
+    <h1>A <em>OR</em> B</h1>
+    <h2>A SUBJECT 44 MINI-GAME</h2>
+    <p>Two doors. <b>One leads out.</b><br>The other leads to the incinerator… and <b>he</b> is waiting behind it.</p>
+    <p>Read the signs. Think. Pick a door before the time runs out.</p>
+    <p class="small">Three rooms. Each one is harder. Headphones recommended.</p>
+    <button class="btn" id="go">ENTER THE ROOM</button>
+  </div>
+
+  <div class="card hidden" id="ok">
+    <h1><em>✓</em> RIGHT DOOR</h1>
+    <p id="okText">Stairs, going down. Another room. Two more doors.</p>
+    <button class="btn" id="next">NEXT ROOM</button>
+  </div>
+
+  <div class="card hidden" id="lose">
+    <h1>WRONG <em>DOOR</em></h1>
+    <p id="loseText"></p>
+    <p class="small" id="why"></p>
+    <button class="btn" id="again">TRY AGAIN</button>
+    <a class="btn ghost" id="play1" target="_blank" rel="noopener">ESCAPE THE FULL FACILITY · GOOGLE PLAY</a>
+  </div>
+
+  <div class="card hidden" id="win">
+    <h1>YOU <em>ESCAPED</em></h1>
+    <h2>3 / 3 ROOMS</h2>
+    <p>Most people pick the wrong door. You didn't. Now escape the whole facility: twenty escape rooms, the Orderly, Pip, the mirror, four endings.</p>
+    <a class="btn" id="play2" target="_blank" rel="noopener">GET SUBJECT 44 · GOOGLE PLAY</a>
+    <button class="btn ghost" id="share">CHALLENGE A FRIEND</button>
+    <button class="btn ghost" id="again2">PLAY AGAIN</button>
+  </div>
+</div>
+<script>
+(() => {
+  const PLAY = 'https://play.google.com/store/apps/details?id=com.subject44.game&referrer=utm_source%3Daorb';
+  // the riddles from Subject 44 itself (js/config.js RIDDLE_POOL)
+  const ONE = 'Exactly <b>one</b> sign is true. The other sign is false.';
+  const EXIT = 'The sign on the <b>exit</b> door is true. The sign on the <b>incinerator</b> door is false.';
+  const MED = [
+    ['B', 'THIS DOOR LEADS OUT, AND THE OTHER LEADS TO THE INCINERATOR.', 'ONE OF THESE DOORS LEADS OUT, AND ONE LEADS TO THE INCINERATOR.'],
+    ['B', 'BOTH OF THESE DOORS LEAD TO THE INCINERATOR.', 'DOOR A LEADS TO THE INCINERATOR.'],
+    ['B', 'DOOR B LEADS OUT.', 'BOTH OF THESE DOORS LEAD OUT.'],
+    ['A', 'AT LEAST ONE OF THESE DOORS LEADS OUT.', 'THIS DOOR LEADS OUT.'],
+    ['B', 'NEITHER OF THESE DOORS LEADS OUT.', 'DOOR A LEADS TO THE INCINERATOR.'],
+    ['A', 'BOTH OF THESE DOORS LEAD OUT.', 'DOOR B LEADS TO THE INCINERATOR.'],
+    ['B', 'ONE OF THESE DOORS LEADS OUT.', 'DOOR A LEADS OUT.'],
+    ['B', 'NEITHER OF THESE DOORS LEADS TO THE INCINERATOR.', 'DOOR A LEADS TO THE INCINERATOR.'],
+    ['A', 'DOOR B LEADS TO THE INCINERATOR.', 'BOTH OF THESE DOORS LEAD TO THE INCINERATOR.'],
+  ];
+  const HARD = [
+    ['A', 'EXACTLY ONE OF THESE SIGNS IS TRUE.', 'DOOR A LEADS TO THE INCINERATOR.'],
+    ['A', 'THE OTHER SIGN IS FALSE.', 'BOTH OF THESE SIGNS ARE TRUE.'],
+    ['B', 'BOTH OF THESE SIGNS ARE FALSE.', 'THIS DOOR LEADS OUT.'],
+    ['A', 'THIS DOOR LEADS OUT, OR DOOR B DOES.', 'THE SIGN ON DOOR A IS FALSE.'],
+    ['B', 'THE SIGNS ARE BOTH TRUE, OR BOTH FALSE.', 'DOOR A LEADS TO THE INCINERATOR.'],
+    ['B', 'BOTH OF THESE DOORS LEAD OUT.', 'DOOR A LEADS TO THE INCINERATOR.'],
+    ['A', 'EXACTLY ONE OF THESE DOORS LEADS OUT.', 'THE SIGN ON DOOR A IS FALSE.'],
+    ['B', 'THE SIGNS ON BOTH DOORS ARE FALSE.', 'DOOR A LEADS TO THE INCINERATOR.'],
+    ['A', 'DOOR B LEADS TO THE INCINERATOR.', 'BOTH OF THESE DOORS LEAD TO THE INCINERATOR.'],
+  ];
+  const flip = s => s.replace(/DOOR ([AB])/g, (m, c) => 'DOOR ' + (c === 'A' ? 'B' : 'A'));
+  const pick = (list, used) => { let i; do { i = Math.floor(Math.random() * list.length); } while (used.includes(list[i]) && used.length < list.length); used.push(list[i]); const r = list[i];
+    return Math.random() < 0.5 ? { ans: r[0], a: r[1], b: r[2] } : { ans: r[0] === 'A' ? 'B' : 'A', a: flip(r[2]), b: flip(r[1]) }; };
+
+  const $ = id => document.getElementById(id), stage = $('stage');
+  ['play1', 'play2'].forEach(id => { $(id).href = PLAY; });
+  // the door scenes, rendered in the game: wA/wB = it opens on him and he runs at you, rA/rB = it opens, nobody
+  const SEQ = { wA: 26, wB: 26, rA: 6, rB: 6 }, cache = [];
+  const frame = (k, i) => '../img/' + k + String(i).padStart(2, '0') + '.jpg';
+  let loaded = false;
+  const preload = () => { if (loaded) return; loaded = true; Object.keys(SEQ).forEach(k => { for (let i = 0; i < SEQ[k]; i++) { const im = new Image(); im.src = frame(k, i); cache.push(im); } }); };
+  // play one scene full screen; at(i) runs on every frame (for the sounds)
+  const play = (k, fps, at, done) => { const fx = $('fx'); fx.style.transition = 'none'; fx.style.opacity = 1; let i = 0;
+    const step = () => { fx.style.backgroundImage = 'url(' + frame(k, i) + ')'; if (at) at(i); i++; if (i < SEQ[k]) setTimeout(step, 1000 / fps); else if (done) done(); }; step(); };
+
+  // ---------- sound, made in code ----------
+  let ac = null, master = null;
+  const audio = () => { if (ac) { if (ac.state === 'suspended') ac.resume(); return; } try { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = 0.8; master.connect(ac.destination); } catch (e) { ac = null; } };
+  const tone = (f, len, type = 'sine', vol = 0.2, at = 0, slide = 0) => { if (!ac) return; const t = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + len); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + len); o.connect(g); g.connect(master); o.start(t); o.stop(t + len + 0.05); };
+  const noise = (len, vol = 0.3, at = 0, hp = 600) => { if (!ac) return; const t = ac.currentTime + at, n = ac.createBufferSource(), b = ac.createBuffer(1, ac.sampleRate * len, ac.sampleRate), d = b.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length); n.buffer = b; const f = ac.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hp; const g = ac.createGain(); g.gain.value = vol; n.connect(f); f.connect(g); g.connect(master); n.start(t); };
+  const heart = k => { tone(55, 0.18, 'sine', 0.3 + k * 0.3); tone(48, 0.2, 'sine', 0.22 + k * 0.25, 0.16); };
+  const creak = () => { tone(140, 0.9, 'sawtooth', 0.06, 0, 90); noise(0.5, 0.08, 0, 2000); };
+  const steps = () => { for (let i = 0; i < 6; i++) tone(70, 0.08, 'sine', 0.35, i * 0.14); };
+  const scream = () => { noise(1.4, 0.6, 0, 500); tone(900, 1.2, 'sawtooth', 0.18, 0, 200); tone(55, 0.9, 'sine', 0.6); };
+  const chime = () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.7, 'triangle', 0.1, i * 0.1));
+  const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) { /* no motor */ } };
+
+  // ---------- the game ----------
+  const TIME = [35, 35, 45];
+  let round = 0, R = null, used = [], left = 0, total = 0, playing = false, last = 0, beat = 0;
+  const card = id => ['start', 'ok', 'lose', 'win'].forEach(c => $(c).classList.toggle('hidden', c !== id));
+  function room(i) {
+    round = i; if (i === 0) used = []; preload();
+    R = i < 2 ? pick(MED, used) : pick(HARD, used);
+    $('round').textContent = i + 1;
+    $('rules').innerHTML = 'One door leads <b>out</b>. The other leads to the <b>incinerator</b>.<br>' + (i < 2 ? ONE : EXIT);
+    $('signA').textContent = R.a; $('signB').textContent = R.b;
+    total = left = TIME[i]; playing = true; last = performance.now(); beat = 0;
+    $('fx').style.opacity = 0; $('fx').style.backgroundImage = 'none'; card(null); requestAnimationFrame(loop);
+  }
+  function loop(now) {
+    if (!playing) return;
+    const dt = Math.min(0.1, (now - last) / 1000); last = now; left -= dt;
+    $('bar').style.transform = `scaleX(${Math.max(0, left / total)})`; $('timer').classList.toggle('hot', left < 8);
+    beat -= dt; const k = 1 - left / total; if (beat <= 0) { heart(k); beat = 1.1 - k * 0.6; }
+    if (left <= 0) return choose(null);
+    requestAnimationFrame(loop);
+  }
+  function choose(d) {
+    if (!playing) return; playing = false;
+    const door = d || (R.ans === 'A' ? 'B' : 'A');          // (time ran out: the wrong door opens by itself)
+    const flash = (v, s) => { $('flash').style.transition = 'none'; $('flash').style.opacity = v; requestAnimationFrame(() => { $('flash').style.transition = `opacity ${s}s`; $('flash').style.opacity = 0; }); };
+    if (d === R.ans) {
+      creak(); buzz(30);
+      play('r' + door, 10, null, () => {
+        chime(); flash(0.95, 0.9);
+        setTimeout(() => { $('fx').style.opacity = 0; }, 150);
+        if (round === 2) return setTimeout(() => card('win'), 700);
+        $('okText').textContent = round === 0 ? 'Stairs, going down. Another room. Two more doors.' : 'Further down. The last room. The signs are different here: read the rules.';
+        setTimeout(() => card('ok'), 700);
+      });
+      return;
+    }
+    // the wrong door: it swings open, he is standing in the furnace glow... and he runs at you
+    creak();
+    play('w' + door, 12, i => {
+      if (i === 12) steps();
+      if (i === 19) { scream(); buzz([80, 40, 220]); stage.classList.remove('shake'); void stage.offsetWidth; stage.classList.add('shake'); flash(0.6, 0.5); }
+    }, () => setTimeout(() => card('lose'), 700));
+    $('loseText').textContent = d ? `Door ${d} led to the incinerator. He was waiting.` : `Time ran out. Door ${door} opened by itself.`;
+    $('why').textContent = `The way out was door ${R.ans}. You reached room ${round + 1} of 3.`;
+  }  document.querySelectorAll('.door').forEach(el => el.addEventListener('click', () => { audio(); choose(el.dataset.d); }));
+  $('go').onclick = () => { audio(); room(0); };
+  $('next').onclick = () => room(round + 1);
+  $('again').onclick = () => room(0);
+  $('again2').onclick = () => room(0);
+  $('share').onclick = async () => {
+    const data = { title: 'A or B · Subject 44', text: 'Two doors. One leads out, one leads to the incinerator. I escaped all 3 rooms… can you?', url: location.href };
+    try { if (navigator.share) await navigator.share(data); else { await navigator.clipboard.writeText(data.url); $('share').textContent = 'LINK COPIED'; } } catch (e) { /* cancelled */ }
+  };
+})();
+</script>
+</body>
+</html>
